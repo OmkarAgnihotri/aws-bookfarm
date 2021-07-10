@@ -17,7 +17,10 @@ class Tags extends React.Component{
             return (
                 <div className={`${this.props.tagClass} p-2`} key={index}>
                     {tag.name}
-                    <a onClick={() => this.handleDelete(index)}><FontAwesomeIcon icon={faTimes} className="float-end" /></a>
+                    <a href="" onClick={(e) => {
+                        e.preventDefault();
+                        this.handleDelete(index);
+                    }}><FontAwesomeIcon icon={faTimes} className="float-end" /></a>
                 </div>
             )
         })
