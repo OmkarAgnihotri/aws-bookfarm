@@ -6,7 +6,7 @@ client = boto3.client('lambda', region_name = 'ap-south-1')
 
 def send_verification_email(email, token):
     
-    url = 'http://127.0.0.1:8000/auth/verify-email/?token={}'.format(token)
+    url = 'https://book-farm.web.app/verify-email/?token={}'.format(token)
     
     event = {'email' : email,'url' : url}
     

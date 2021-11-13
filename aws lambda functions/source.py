@@ -10,7 +10,7 @@ def send_email_for_verification(event, context):
     url = event['url']
     
     response = requests.post(
-		"https://api.mailgun.net/v3/devinsider.tech/messages",
+		os.environ.get('mailgunURL'),
 	    auth=("api", os.environ.get('API_KEY')),
 		data={"from": "no-reply<bookfarm.tech>",
 			"to": email,
@@ -37,7 +37,7 @@ def send_password_reset_email(event, context):
     }
     
     response = requests.post(
-		"https://api.mailgun.net/v3/devinsider.tech/messages",
+		os.environ.get('mailgunURL'),
 	    auth=("api", os.environ.get('API_KEY')),
 		data=data
     )

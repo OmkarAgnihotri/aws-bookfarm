@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-l9+og#uos&m$k=e5m69d92y#fwu#4#2t_d)pqlbo_l923ei$ka'
+SECRET_KEY = os.environ['secret-key']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -85,18 +85,18 @@ WSGI_APPLICATION = 'bookfarm_api.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
     # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
-    #     'NAME': os.environ['RDS_DB_NAME'],
-    #     'USER': os.environ['RDS_USERNAME'],
-    #     'PASSWORD': os.environ['RDS_PASSWORD'],
-    #     'HOST': os.environ['RDS_HOSTNAME'],
-    #     'PORT': os.environ['RDS_PORT'],
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     # }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.environ['RDS_DB_NAME'],
+        'USER': os.environ['RDS_USERNAME'],
+        'PASSWORD': os.environ['RDS_PASSWORD'],
+        'HOST': os.environ['RDS_HOSTNAME'],
+        'PORT': os.environ['RDS_PORT'],
+    }
 }
 
 

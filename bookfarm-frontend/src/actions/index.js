@@ -1,4 +1,5 @@
 import APIConfig from '../apis/server'
+import createNotification from '../components/util/Notification';
 
 export const changeAuthState = (user) => {
     
@@ -10,8 +11,24 @@ export const changeAuthState = (user) => {
 
 export const fetchBooks = () => {
     return async (dispatch) => {
-        const response = await APIConfig.get('/books/');
-        dispatch({ type : 'FETCH_BOOKS',payload : response.data});
+        try{
+            const response = await APIConfig.get('/books/',{
+                headers : {
+                    Authorization : `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            dispatch({ type : 'FETCH_BOOKS',payload : response.data});
+        }
+        catch(e){
+            if(e.response && e.response.status === 403){
+                localStorage.removeItem('token');
+                dispatch(changeAuthState(null));
+                createNotification('Please login again !', 'error');
+            }
+            else createNotification('Some error occurred! Please try again.', 'error');
+            
+        }
+        
     };
 }
 

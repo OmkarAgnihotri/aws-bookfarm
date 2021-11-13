@@ -7,6 +7,7 @@ import Tags from '../util/Tags';
 import defaultBookImage from '../../assets/images/book.png';
 import createNotification from '../util/Notification';
 import { Link } from 'react-router-dom';
+import { changeAuthState } from '../../actions';
 
 class EditBook extends React.Component{
     state = {
@@ -20,21 +21,48 @@ class EditBook extends React.Component{
         description : '',
         price : 0,
         key : Date.now(),
+        isAvailable : false,
         selectedBook : null
     }
 
     componentDidMount = () => {
-        APIConfig.get('/tags/')
+        APIConfig.get('/tags/',{
+            headers : {
+                Authorization : `Bearer ${localStorage.getItem('token')}`
+            }
+        })
         .then(response => this.setState({suggestedTags : response.data}))
-        .catch(err=>console.log(err));
+        .catch((err) => {
+            if(err.response && err.response.status === 403){
+                localStorage.removeItem('token');
+                this.props.changeAuthState(null);
+                createNotification('Please Login Again !', 'error');
+            }
+            else createNotification('Some error occurred! Please try again!', 'error');
+        });
 
-        APIConfig.get('/authors/')
+        APIConfig.get('/authors/',{
+            headers : {
+                Authorization : `Bearer ${localStorage.getItem('token')}`
+            }
+        })
         .then(response => this.setState({suggestedAuthors : response.data}))
-        .catch(err=>console.log(err));
+        .catch((err) => {
+            if(err.response && err.response.status === 403){
+                localStorage.removeItem('token');
+                this.props.changeAuthState(null);
+                createNotification('Please Login Again !', 'error');
+            }
+            else createNotification('Some error occurred! Please try again!', 'error');
+        });
 
         const bookId = this.props.match.params.bookId;
 
-        APIConfig.get(`/books/${bookId}`)
+        APIConfig.get(`/books/${bookId}`,{
+            headers : {
+                Authorization : `Bearer ${localStorage.getItem('token')}`
+            }
+        })
         .then(response => {
             this.setState({
                 selectedBook : response.data,
@@ -42,10 +70,19 @@ class EditBook extends React.Component{
                 selectedTags : response.data.tags,
                 title : response.data.title,
                 price : response.data.price,
-                previewImageURL : response.data.imageUrl
+                previewImageURL : response.data.imageUrl,
+                isAvailable : response.data.isAvailable
             })
         })
-        .catch(err => console.log(err));
+        .catch((err) => {
+            if(err.response && err.response.status === 403){
+                localStorage.removeItem('token');
+                this.props.changeAuthState(null);
+                createNotification('Please Login Again !', 'error');
+            }
+            else createNotification('Some error occurred! Please try again!', 'error');
+        });
+
     }
 
     
@@ -117,39 +154,63 @@ class EditBook extends React.Component{
         if(this.state.selectedImage){
             const FILE_NAME = `${this.props.userID}_${Date.now()}.${this.state.selectedImage.name.split('.').slice(-1)[0]}`;
        
-            const response = (await axios.post('https://c0bvn7msa5.execute-api.ap-south-1.amazonaws.com/testing-with-cors/get-upload-url',{
-                bucketName : 'bookfarm-images',
-                filePath : `images/${FILE_NAME}`
-            })).data.url;
-            
-            const formData = new FormData()
-
-            Object.keys(response.fields).forEach(key => formData.append(key, response.fields[key]))
-
-            formData.append('file', this.state.selectedImage);
-            
-            await axios.post(response.url,formData,{'headers' : {'Content-Type':'multipart/form-data'}})
-
-            this.setState({
-                previewImageURL : `https://d32wahoe3gu7v.cloudfront.net/${FILE_NAME}`
-            })
+            try{
+                
+                const response = (await axios.post('https://c0bvn7msa5.execute-api.ap-south-1.amazonaws.com/testing-with-cors/get-upload-url',{
+                    bucketName : 'bookfarm-images',
+                    filePath : `images/${FILE_NAME}`
+                })).data.url;
+                
+                const formData = new FormData()
+    
+                Object.keys(response.fields).forEach(key => formData.append(key, response.fields[key]))
+    
+                formData.append('file', this.state.selectedImage);
+                
+                await axios.post(response.url,formData,{'headers' : {'Content-Type':'multipart/form-data'}});
+    
+                this.setState({
+                    previewImageURL : `https://d32wahoe3gu7v.cloudfront.net/${FILE_NAME}`
+                })
+            }
+            catch(err){
+                if(err.response && err.response.status === 403){
+                    localStorage.removeItem('token');
+                    this.props.changeAuthState(null);
+                    createNotification('Please Login Again !', 'error');
+                }
+                else createNotification('Some error occurred! Please try again!', 'error');
+            }
         }
         
         
        
-       APIConfig.put(`users/${this.props.userID}/books/${this.props.match.params.bookId}/`,{
+        APIConfig.put(`users/${this.props.userID}/books/${this.props.match.params.bookId}/`,{
             title: this.state.title,
             imageUrl : this.state.previewImageURL,
             price : this.state.price,
             owner : this.props.userID,
             authors : this.state.selectedAuthors,
+            isAvailable : this.state.isAvailable,
             tags : this.state.selectedTags
-       })
+        },
+        {
+            headers : {
+                Authorization : `Bearer ${localStorage.getItem('token')}`
+            }
+        })
        .then(res => {
            createNotification('Book updated !!', 'success');
            
        })
-       .catch(err => console.error(err));
+       .catch((err) => {
+            if(err.response && err.response.status === 403){
+                localStorage.removeItem('token');
+                this.props.changeAuthState(null);
+                createNotification('Please Login Again !', 'error');
+            }
+            else createNotification('Some error occurred! Please try again!', 'error');
+        });
 
     }
 
@@ -157,6 +218,7 @@ class EditBook extends React.Component{
 
         return (
             <div className="container mt-2">
+                
                 <div className="row justify-content-center">
                     <div className="col-lg-8 col-md-10 col-12">
                         <div className="card p-3">
@@ -184,7 +246,7 @@ class EditBook extends React.Component{
                                 </div>
                                 <div className="row">
                                     <div className="col p-2">
-                                        <hr />
+                                        <div className="dropdown-divider"></div>
                                     </div>
                                 </div>
                                 <div className="row">
@@ -206,9 +268,10 @@ class EditBook extends React.Component{
                                         </div>
                                     </div>
                                 </div>
+                               
                                 <div className="row">
                                     <div className="col p-2">
-                                        <hr />
+                                        <div className="dropdown-divider"></div>
                                     </div>
                                 </div>
                                 <div className="row">
@@ -232,7 +295,7 @@ class EditBook extends React.Component{
                                 </div>
                                 <div className="row">
                                     <div className="col p-2">
-                                        <hr />
+                                        <div className="dropdown-divider"></div>
                                     </div>
                                 </div>
                                 <div className="row">
@@ -253,7 +316,7 @@ class EditBook extends React.Component{
                                 </div>
                                 <div className="row">
                                     <div className="col p-2">
-                                        <hr />
+                                        <div className="dropdown-divider"></div>
                                     </div>
                                 </div>
                                 <div className="row">
@@ -274,7 +337,7 @@ class EditBook extends React.Component{
                                 </div>
                                 <div className="row">
                                     <div className="col p-2">
-                                        <hr />
+                                        <div className="dropdown-divider"></div>
                                     </div>
                                 </div>
                                 <div className="row">
@@ -298,8 +361,45 @@ class EditBook extends React.Component{
                                     </div>
                                 </div>
                                 <div className="row">
+                                    <div className="col p-2">
+                                        <div className="dropdown-divider"></div>
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col d-flex align-items-center p-2">
+                                        <div className="container">
+                                            <div className="row">
+                                                <div className="col-lg-8 ">
+                                                    <label className="px-2">Book available ?</label>
+                                                    <input 
+                                                        className="custom-checkbox checkbox-lg"
+                                                        type="checkbox"
+                                                        checked={this.state.isAvailable}
+                                                        onChange={(e) => {
+                                                            console.log(this.state.isAvailable);
+                                                            this.setState({isAvailable : e.target.checked})
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="row">
                                     <div className="col mt-5">
-                                            <Link to={`/books/detail/${this.props.match.params.bookId}`} className="btn btn-danger float-end mt-1 mx-2" >
+                                            <Link to={{
+                                                pathname:`/books/detail/${this.props.match.params.bookId}`,
+                                                    state : {
+                                                        previousPage : (this.props.location.state)?
+                                                                        this.props.location.state.previousPage || '/books':'/books',
+                                                        queryText : (this.props.location.state)?
+                                                                        this.props.location.state.queryText || '':'',
+
+                                                    }
+                                                }}
+                                                className="btn btn-danger float-end mx-2"
+                                            >
+                                            {/* <Link to={`/books/detail/${this.props.match.params.bookId}`} className="btn btn-danger float-end mt-1 mx-2" > */}
                                                 cancel
                                             </Link>
                                             <button className="btn btn-primary float-end" onClick={this.onSubmit}>save</button>
@@ -323,4 +423,6 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, {})(EditBook);
+export default connect(mapStateToProps, {
+    changeAuthState
+})(EditBook);

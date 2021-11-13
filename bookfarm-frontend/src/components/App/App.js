@@ -14,6 +14,7 @@ import VerifyEmail from '../VerifyEmai';
 import LoadingSpinner from '../util/LoadingSpinner';
 import SignUp from '../Authentication/SignUp';
 import { BrowserRouter, Route, Redirect } from 'react-router-dom';
+import APIConfig from '../../apis/server';
 
 library.add(fab);
 
@@ -39,7 +40,7 @@ class App extends Component {
                         if(change.type === 'added'){
                             this.props.addChat({id:chatID, ...change.doc.data()});
 
-                            firestoreDB.collection(`chats/${chatID}/messages`).orderBy('timestamp','desc').limit(15)
+                            firestoreDB.collection(`chats/${chatID}/messages`).orderBy('timestamp', 'asc').limit(15)
                             .onSnapshot(snapshot => {
                                 snapshot.docChanges().forEach(addedMessage => {
                                     const message = {
@@ -64,7 +65,7 @@ class App extends Component {
                         if(change.type === 'added'){
                             this.props.addChat({id:chatID, ...change.doc.data()});
 
-                            firestoreDB.collection(`chats/${chatID}/messages`).orderBy('timestamp','desc').limit(15)
+                            firestoreDB.collection(`chats/${chatID}/messages`).orderBy('timestamp', 'asc').limit(15)
                             .onSnapshot(snapshot => {
                                 snapshot.docChanges().forEach(addedMessage => {
                                     const message = {
@@ -95,6 +96,7 @@ class App extends Component {
     }
 
     renderApp = () => {
+        
         if(this.state.isLoading){
             return (
                 <div className="container d-flex justify-content-center" style={{paddingTop:'15%'}}>
@@ -103,6 +105,7 @@ class App extends Component {
             )
         }
         if(this.props.user){
+            
             return <AppContainer />
         }
         

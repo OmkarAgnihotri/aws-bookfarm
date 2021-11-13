@@ -12,11 +12,21 @@ import EditBook from '../Books/EditBook';
 import {connect} from 'react-redux';
 import Inventory from '../Books/Inventory';
 import ChatContainer from '../chats/ChatContainer';
+import WishList from '../Books/WishList';
+import ViewUserProfile from '../Authentication/ViewUserProfile';
 
 const AppContainer = (props) => {
     return (
         <>
             <Navigation />
+
+            <Route 
+                path='/' exact 
+                render={(params)=>{
+                    return props.user?<Redirect to='/books'/>:<Redirect to='/signin' />
+                }}
+            />
+
             <Route 
                 path='/books' exact 
                 render={()=>{
@@ -53,6 +63,20 @@ const AppContainer = (props) => {
                 path='/chats' exact 
                 render={(params)=>{
                     return props.user?<ChatContainer {...params}/>:<Redirect to='/signin' />
+                }}
+            />
+
+            <Route 
+                path='/wishlist' exact 
+                render={(params)=>{
+                    return props.user?<WishList {...params}/>:<Redirect to='/signin' />
+                }}
+            />
+
+            <Route 
+                path='/profile' exact 
+                render={(params)=>{
+                    return props.user?<ViewUserProfile {...params}/>:<Redirect to='/signin' />
                 }}
             />
         </>

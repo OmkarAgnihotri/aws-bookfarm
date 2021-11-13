@@ -6,7 +6,7 @@ import MessageDetail from './MessageDetail';
 class MessageList extends React.Component{
  
     componentDidMount = () => {
-        
+        this.scrollToBottom();
     }
 
     componentDidUpdate = () => {

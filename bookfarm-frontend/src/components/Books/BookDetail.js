@@ -9,6 +9,10 @@ import { Link, Redirect } from 'react-router-dom';
 import {connect} from 'react-redux';
 import { firestoreDB } from '../../config/firebase';
 
+import { changeAuthState } from '../../actions';
+import createNotification from '../util/Notification';
+
+
 class BookDetail extends React.Component{
     state = {
         selectedBook : null,
@@ -20,18 +24,33 @@ class BookDetail extends React.Component{
         
         const bookId = this.props.match.params.bookId;
 
-        APIConfig.get(`/books/${bookId}`)
+        APIConfig.get(`/books/${bookId}`,{
+            headers : {
+                Authorization : `Bearer ${localStorage.getItem('token')}`
+            }
+        })
         .then(response => {
             this.setState({
                 selectedBook : response.data
             })
         })
-        .catch(err => console.log(err));
+        .catch((err) => {
+            if(err.response && err.response.status === 403){
+                localStorage.removeItem('token');
+                this.props.changeAuthState(null);
+                createNotification('Please Login Again !', 'error');
+            }
+            else createNotification('Some error occurred! Please try again.', 'error');
+        });
     }
 
     renderTags = (tags = [] ,cssClass) => {
         return tags.map(tag => {
-            return (<div className={`d-block m-1 p-2 ${cssClass}`}>{tag.name}</div>);
+            return (<><div className={`col-lg-6 col-md-6 col-sm-6 col-6`}>
+                    <div className={`p-3 ${cssClass}`}>
+                        {tag.name}
+                    </div>
+                </div></>);
         });
     }
 
@@ -113,7 +132,7 @@ class BookDetail extends React.Component{
                             </div>
                             <div className="row">
                                 <div className="col p-2">
-                                    <hr />
+                                    <div className="dropdown-divider"></div>
                                 </div>
                             </div>
                             <div className="row">
@@ -126,7 +145,7 @@ class BookDetail extends React.Component{
                             </div>
                             <div className="row">
                                 <div className="col p-2">
-                                    <hr />
+                                    <div className="dropdown-divider"></div>
                                 </div>
                             </div>
                             <div className="row">
@@ -139,7 +158,7 @@ class BookDetail extends React.Component{
                             </div>
                             <div className="row">
                                 <div className="col p-2">
-                                    <hr />
+                                    <div className="dropdown-divider"></div>
                                 </div>
                             </div>
                             <div className="row">
@@ -147,25 +166,33 @@ class BookDetail extends React.Component{
                                     <div className="h5">Authors</div>
                                 </div>
                                 <div className="col-lg-8 col-md-7 col-sm-12 col-12 d-flex align-items-center p-2">
-                                        {this.renderTags(this.state.selectedBook.authors, 'alert alert-warning')}
+                                    <div className="container">
+                                        <div className="row">
+                                            {this.renderTags(this.state.selectedBook.authors, 'alert alert-warning')}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div className="row">
                                 <div className="col p-2">
-                                    <hr />
+                                    <div className="dropdown-divider"></div>
                                 </div>
                             </div>
                             <div className="row">
                                 <div className="col-lg-4 col-md-5 col-sm-12 col-12">
                                     <div className="h5">Tags</div>
                                 </div>
-                                <div className="col-lg-8 col-md-7 col-sm-12 col-12 d-flex align-items-center p-2">
-                                    {this.renderTags(this.state.selectedBook.tags, 'alert alert-primary')}
+                                <div className="col-lg-8 col-md-7 col-sm-12 col-12 align-items-center p-2">
+                                    <div className="container">
+                                        <div className="row">
+                                            {this.renderTags(this.state.selectedBook.tags, 'alert alert-primary')}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div className="row">
                                 <div className="col p-2">
-                                    <hr />
+                                    <div className="dropdown-divider"></div>
                                 </div>
                             </div>
                             <div className="row">
@@ -180,7 +207,18 @@ class BookDetail extends React.Component{
                                 <div className="col w-100 mt-4">
                                     {
                                         this.props.user.id === this.state.selectedBook.owner.id?(
-                                            <Link to={`/books/edit/${this.props.match.params.bookId}`} className="btn btn-primary">
+                                            <Link to={{
+                                                pathname:`/books/edit/${this.props.match.params.bookId}`,
+                                                    state : {
+                                                        previousPage : (this.props.location.state)?
+                                                                        this.props.location.state.previousPage || '/books':'/books',
+                                                        queryText : (this.props.location.state)?
+                                                                        this.props.location.state.queryText || '':'',
+
+                                                    }
+                                                }}
+                                                className="btn btn-primary"
+                                            >
                                                 Edit
                                             </Link>
                                         ):null
@@ -188,10 +226,20 @@ class BookDetail extends React.Component{
                                     }
                                     {
                                         this.props.user.id !== this.state.selectedBook.owner.id?(
-                                            <button className="btn btn-outline-primary" onClick={() => this.onContactUser(this.state.selectedBook.owner)}>contact user</button>
+                                            <button className="btn btn-outline-primary" onClick={() => this.onContactUser(this.state.selectedBook.owner)}>contact owner</button>
                                         ):null
                                         
                                     }
+                                </div>
+                                <div className="col w-100 mt-4">
+                                    <Link to={{
+                                        pathname : this.props.location.state?this.props.location.state.previousPage || '/books':'/books',
+                                        state : {
+                                            queryText : this.props.location.state?this.props.location.state.queryText || '':''
+                                        }
+                                    }} className="btn btn-primary">
+                                        Back
+                                    </Link>
                                 </div>
                             </div>
                         </div>
@@ -232,4 +280,6 @@ class BookDetail extends React.Component{
         }
     }
 
-export default connect(mapStateToProps, {})(BookDetail);
+export default connect(mapStateToProps, {
+    changeAuthState
+})(BookDetail);

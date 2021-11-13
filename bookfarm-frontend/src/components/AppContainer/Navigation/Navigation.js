@@ -15,7 +15,8 @@ class Navigation extends Component{
     }
 
     onSignOut = () => {
-        localStorage.clear();
+        localStorage.removeItem('token');
+        this.props.changeAuthState(null);
         this.setState({redirect : true});
     }
 
@@ -40,6 +41,9 @@ class Navigation extends Component{
                             <Nav.Link>
                                 <Link to='/chats' >chats</Link>
                             </Nav.Link>
+                            <Nav.Link>
+                                <Link to='/wishlist' >Wish List</Link>
+                            </Nav.Link>
                         </Nav>
                         <Nav className ="ms-auto align-middle">
                             <NavDropdown  title={
@@ -47,7 +51,7 @@ class Navigation extends Component{
                                     <span><FontAwesomeIcon icon = {faUserCircle} size='1x' /> {this.props.user.first_name}</span>
                                 </>
                             } id="basic-nav-dropdown">
-                                <NavDropdown.Item >Profile</NavDropdown.Item>
+                                <NavDropdown.Item ><Link to='/profile' >Profile</Link></NavDropdown.Item>
                                 <NavDropdown.Divider />
                                 <NavDropdown.Item onClick={this.onSignOut}>Log out</NavDropdown.Item>
                             </NavDropdown>

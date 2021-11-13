@@ -1,30 +1,52 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import {fetchBooks} from '../../actions';
+import {fetchBooks, changeAuthState} from '../../actions';
 import {Link, Redirect} from 'react-router-dom';
 import { firestoreDB } from '../../config/firebase';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faComments, faBookmark } from '@fortawesome/free-solid-svg-icons'
+import { faComments, faBookmark, faTrash, faTrashAlt, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { MDBTooltip } from 'mdbreact';
 import APIConfig from '../../apis/server';
 import createNotification from '../util/Notification';
 
-class BookList extends React.Component{
+class WishList extends React.Component{
     state = {
         redirect : false,
         selectedChat : null,
-        queryText : ''
+        queryText : '',
+        wishlistedBooks : []
     }
 
     componentDidMount = () => {
-        this.props.fetchBooks()
+        APIConfig.get(`users/${this.props.user.id}/wishlisted-books`,{
+            headers : {
+                Authorization : `Bearer ${localStorage.getItem('token')}`
+            }
+        })
+        .then(response => {
+            console.log(response.data);
+            this.setState({wishlistedBooks : response.data.map(item => {
+                return {
+                    itemId : item.id,
+                    ...item.book
+                }
+            })});
+        })
+        .catch(err => {
+            if(err.response && err.response.status === 403){
+                localStorage.removeItem('token');
+                this.props.changeAuthState(null);
+                createNotification('Please Login Again !', 'error');
+            }
+            else createNotification('Some error occurred! Please try again!', 'error');
+        })
     }
 
     onContactUser = async (owner) => {
         const index = this.props.chats.findIndex(chat => {
             // console.log(this.props.user, owner, chat);
-            if(chat.user1.id === this.props.user.id && chat.user2.id === owner.id
-                || chat.user2.id === this.props.user.id && chat.user1.id === owner.id){
+            if((chat.user1.id === this.props.user.id && chat.user2.id === owner.id)
+                || (chat.user2.id === this.props.user.id && chat.user1.id === owner.id)){
                 
                 return true
             }
@@ -42,7 +64,7 @@ class BookList extends React.Component{
                 user2 : {
                     id : owner.id,
                     firstName : owner.first_name,
-                    lastName : owner.last_name
+                    lastName : this.props.user.last_name
                 }
             })
             this.setState({
@@ -60,18 +82,18 @@ class BookList extends React.Component{
 
     }
 
-    onAddToWishList = (bookID) => {
-        APIConfig.post(`users/${this.props.user.id}/wishlisted-books/`,{
-            user : this.props.user.id,
-            book : bookID
-        },
+    onRemoveFromWishList = (itemId) => {
+        APIConfig.delete(`users/${this.props.user.id}/wishlisted-books/${itemId}`,
         {
             headers : {
                 'Authorization' : `Bearer ${localStorage.getItem('token')}`
             }
         })
         .then(response => {
-            createNotification('Book added to Wish List!', 'success');
+            createNotification('Book removed from Wish List!', 'warning');
+            this.setState({
+                wishlistedBooks : this.state.wishlistedBooks.filter(book => book.itemId !== itemId)
+            })
         })
         .catch(err => {
             if(err.response && err.response.status === 403){
@@ -93,14 +115,14 @@ class BookList extends React.Component{
 
 
     renderBooks = () => {
-        if(this.props.books.length === 0){
+        if(this.state.wishlistedBooks.length === 0){
             return <div className="col-lg-4 col-md-5 col-12">
                     <div className="alert alert-warning">No books present</div>
                 </div>
         }
 
 
-        const booksToDisplay = this.props.books
+        const booksToDisplay = this.state.wishlistedBooks
             .filter(book => book.title.toLowerCase().indexOf(this.state.queryText) > -1)
             .filter(book => book.owner.id !== this.props.user.id)
             .map((book, index) => {
@@ -128,22 +150,7 @@ class BookList extends React.Component{
                             <div className="container">
                                 <div className="row">
                                     <div className="col text-center">
-                                        <span className=" px-2 float-start">
-                                            <MDBTooltip domElement
-                                                tag="span"
-                                                placement="top">
-                                                    <span>
-                                                        <a href="" onClick={(e) => {
-                                                            e.preventDefault();
-                                                            this.onAddToWishList(book.id);
-                                                        }}>
-                                                            <FontAwesomeIcon icon={faBookmark} size='2x' className="text-default" /> 
-                                                        </a>
-                                                    </span>
-                                                    <span>Add to Wish List</span>
-                                            </MDBTooltip>
-                                        </span>
-                                        <span className="float-end px-2">
+                                        <span className="float-start px-2">
                                             <MDBTooltip 
                                                 domElement
                                                 tag="span"
@@ -159,6 +166,22 @@ class BookList extends React.Component{
                                                     <span>Click to contact owner</span>
                                             </MDBTooltip>
                                         </span>
+                                        <span className=" px-2 float-end">
+                                            <MDBTooltip domElement
+                                                tag="span"
+                                                placement="top">
+                                                    <span>
+                                                        <a href="" onClick={(e) => {
+                                                            e.preventDefault();
+                                                            this.onRemoveFromWishList(book.itemId);
+                                                        }}>
+                                                            <FontAwesomeIcon icon={faTrashAlt} size='2x' className="text-danger" /> 
+                                                        </a>
+                                                    </span>
+                                                    <span>Remove from Wish List</span>
+                                            </MDBTooltip>
+                                        </span>
+                                        
                                     
                                         {/* <button data-bs-toggle="tooltip" data-bs-placement="top" title="Tooltip on top" className="btn btn-outline-primary btn-sm" onClick={() => this.onContactUser(book.owner)}><small>contact owner</small></button> */}
                                     </div>
@@ -183,7 +206,9 @@ class BookList extends React.Component{
         else {
             return (
                 <>
+
                     <div className="row justify-content-center mt-2 py-2">
+                        
                         <div className="col-lg-4 col-md-8 col-12">
                             <input 
                                 className="form-control" 
@@ -208,6 +233,13 @@ class BookList extends React.Component{
 
         return (
             <div className= "container">
+                <div className="row justify-content-center mt-2 py-2">
+                    <div className="col-lg-4 col-md-10 col-12">
+                        <div className="alert alert-primary">
+                            <span><FontAwesomeIcon icon={faInfoCircle} /></span> These are books that you bookmarked
+                        </div>
+                    </div>
+                </div>
                 {this.renderBooks()}
             </div>
         )
@@ -222,4 +254,8 @@ const mapStateToProps = (state) => {
     }
 }
 
-export default connect(mapStateToProps, {fetchBooks})(BookList);
+export default connect(mapStateToProps, {
+    fetchBooks,
+    changeAuthState
+
+})(WishList);

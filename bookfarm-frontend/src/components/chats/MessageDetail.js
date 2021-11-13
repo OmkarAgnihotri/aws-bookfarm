@@ -5,10 +5,12 @@ import { connect } from 'react-redux';
 class MessageDetail extends React.Component{
     
     render(){
-        const {text, firstName, photoUrl, userId} = this.props;
+        const {text, firstName, photoUrl, userId, uid} = this.props;
+        
         return (
+
             <div class={
-                `item py-4 px-3 d-flex ${this.props.userId === userId?`alert-primary`:''}`
+                `item py-4 px-3 d-flex ${userId === uid?`alert-info`:''}`
             }>
                 <img class="ui avatar image inline"  src={photoUrl}/>
                 <div class="content w-100">
@@ -22,7 +24,7 @@ class MessageDetail extends React.Component{
 
 const mapStateToProps = (state) => {
     return {
-        userId : state.user.id
+        uid : state.user.id
     }
 }
 

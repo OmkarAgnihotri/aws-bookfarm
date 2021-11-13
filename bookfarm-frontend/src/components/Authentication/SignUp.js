@@ -35,7 +35,8 @@ class SignUp extends Component{
             resetForm();
         })
         .catch(err => {
-            createNotification(err.response.data.email[0], 'error');
+            if(err.response && err.response.data && err.response.data.email)createNotification(err.response.data.email[0], 'error');
+            else createNotification('Some error occurred! Please try again', 'error');
             this.setState({disabled:false});
         })
     }

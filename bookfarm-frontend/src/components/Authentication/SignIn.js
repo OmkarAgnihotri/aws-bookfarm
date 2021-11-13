@@ -38,7 +38,8 @@ class SignIn extends Component{
             
         })
         .catch(err => {
-            createNotification(err.response.data.detail, 'error');
+            if(err.response && err.response.data && err.response.data.detail)createNotification(err.response.data.detail, 'error');
+            else createNotification('Some error occurred! Please try again', 'error');
             this.setState({disabled:false});
         })
     }

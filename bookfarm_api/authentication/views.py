@@ -13,6 +13,7 @@ from .serializers import UserSignUpSerializer, UserLoginSerializer, EmailVerifyS
 
 User = get_user_model()
 
+# No authentication required
 class UserSignUpViewSet(ViewSet):
     def create(self, request):
         serializer = UserSignUpSerializer(data = request.data)
@@ -23,6 +24,7 @@ class UserSignUpViewSet(ViewSet):
         send_verification_email(user.email, user.verification_uuid)
         return Response()
         
+# No authentication required
 class EmailVerifyViewSet(ViewSet):
     def create(self, request):
         serializer = EmailVerifySerializer(data = request.data)
@@ -36,7 +38,7 @@ class EmailVerifyViewSet(ViewSet):
         except User.DoesNotExist :
             return Response({'detail' : 'Email verification failed !'}, status=403)
         
-    
+# No authentication required    
 class UserLoginViewSet(ViewSet):
     def create(self, request):
         serializer = UserLoginSerializer(data = request.data)
@@ -55,7 +57,7 @@ class UserLoginViewSet(ViewSet):
         
         return Response({'token' : token})
 
-
+# No authentication required
 class ForgotPasswordViewSet(ViewSet):
     def create(self, request):
         serializer = ForgotPasswordSerializer(data = request.data)

@@ -18,7 +18,7 @@ class ChatContainer extends React.Component{
         const queryParams = qs.parse(this.props.location.search, { ignoreQueryPrefix: true });
         
         if(queryParams.active){
-            const index = this.props.chat.findIndex(chat => chat.id === queryParams.active);
+            const index = this.props.chats.findIndex(chat => chat.id === queryParams.active);
             if(index != -1){
                 this.setState({activeChat : queryParams.active})
             }
@@ -26,6 +26,18 @@ class ChatContainer extends React.Component{
     }
 
     renderUserList = () => {
+
+        if(this.props.chats.length === 0){
+            return (
+                <div className="container my-3">
+                    <div className="row jusstify-content-center">
+                        <div className="col-lg-6 col-md-6 col-12">
+                            <div className="alert alert-warning">No Active chats</div>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
         
         return this.props.chats.map(chat => {
             return (
@@ -35,17 +47,20 @@ class ChatContainer extends React.Component{
                         activeChat : chat.id
                     });
                 }}>
-                    <div class="item py-4 px-2 d-flex">
+                    <div class={
+                        `item py-4 px-3 d-flex align-items-center ${this.state.activeChat === chat.id?'alert-info':''}`
+                    }>
                         
                         <img class="ui avatar image inline"  src={defaultProfilePic}/>
-                        <div class="content w-100">
-                            <div class="header p-1 inline">{
+                        <div class="content w-100  d-flex align-items-center">
+                            <div class="header p-1">{
                                 chat.user1.id !== this.props.userID?
                                 `${chat.user1.firstName} ${chat.user1.lastName}`:`${chat.user2.firstName} ${chat.user2.lastName}`
                             }</div>
                             <small class="text-muted small p-1 "></small>
                         </div>
                     </div>
+                    <div className="dropdown-divider"></div>
                 </a>
             )
         })
@@ -57,7 +72,7 @@ class ChatContainer extends React.Component{
                 <div className="row">
                     <div className="col">
                         <div className="container-fluid" >
-                            <div className="ui list divided">
+                            <div className="ui list divided mt-2">
                                 {this.renderUserList()}
                             </div>
                         </div>

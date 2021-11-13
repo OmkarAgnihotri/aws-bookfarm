@@ -1,4 +1,5 @@
 import boto3
+import os
 
 client = boto3.client('lambda')
 
@@ -7,7 +8,7 @@ def lambda_send_verification_email():
         FunctionName = 'send_email_for_verification',
         Runtime = 'python3.8',
         Handler = 'source.send_email_for_verification',
-        Role = 'arn:aws:iam::838807621753:role/allowLogging',
+        Role = os.environ.get('role-allowLogging'),
         Code = {
             'S3Bucket' : 'bookfarm-project-code',
             'S3Key' : 'lambda-functions/lambda-source.zip'
@@ -24,7 +25,7 @@ def lambda_send_password_reset_email():
         FunctionName = 'send_password_reset_email',
         Runtime = 'python3.8',
         Handler = 'source.send_password_reset_email',
-        Role = 'arn:aws:iam::838807621753:role/allowLogging',
+        Role = os.environ.get('role-allowLogging'),
         Code = {
             'S3Bucket' : 'bookfarm-project-code',
             'S3Key' : 'lambda-functions/lambda-source.zip'
@@ -42,7 +43,7 @@ def lambda_get_signed_url():
         FunctionName = 'get_signed_url',
         Runtime = 'python3.8',
         Handler = 'source.get_signed_url',
-        Role = 'arn:aws:iam::838807621753:role/lambdaGetSignedUrl',
+        Role = os.environ.get('role-lambdaGetSignedURL'),
         Code = {
             'S3Bucket' : 'bookfarm-project-code',
             'S3Key' : 'lambda-functions/lambda-source.zip'
